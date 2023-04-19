@@ -1,0 +1,5 @@
+﻿enum OperationType
+{
+    Buy,
+    Sell
+}

@@ -17,18 +17,19 @@ namespace GanhoCapital
             {
                 JsonSerializerOptions options = new JsonSerializerOptions();
                 options.Converters.Add(new JsonStringEnumConverter());
-                string[] inputao;
+                string[] ArrayInput;
                 input = input.Replace("] [", "]] [[");
-                inputao = (input.Split("] ["));
-                List<List<Operation>> operationList = new List<List<Operation>>();
-                foreach (string line in inputao)
+                ArrayInput = (input.Split("] ["));
+                List<IEnumerable<Operation>> operationList = new List<IEnumerable<Operation>>();
+                foreach (string line in ArrayInput)
                 {
-                    operationList.Add(JsonSerializer.Deserialize<List<Operation>>(line, options));
+                    //If there is different block operations together (case 1 + case 2 e.g.)
+                    operationList.Add(JsonSerializer.Deserialize<IEnumerable<Operation>>(line, options));
                 }
 
-                //List<Operation> operations = JsonSerializer.Deserialize<List<Operation>>(input, options);
                 foreach (var operation in operationList)
                 {
+                    //Tax calculation for each single operation
                     var taxes = CalculateTaxes(operation);
 
                     Console.WriteLine(JsonSerializer.Serialize(taxes));
@@ -39,109 +40,86 @@ namespace GanhoCapital
             Console.ReadLine(); // aguarda a entrada do usuário para encerrar o console
         }
 
-        static List<Tax> CalculateTaxes(List<Operation> operations)
+        static List<Tax> CalculateTaxes(IEnumerable<Operation> operations)
         {
+
             var taxes = new List<Tax>();
-            double QuantidadeDeAcoes = 0;
-            double Custo = 0;
-            double ValorOperacao = 0;
-            double Imposto = 0;
-            double ImpostoAbater = 0;
-            double PrecoMedio = 0;
-            double Lucro = 0;
+            double StocksBalance = 0;
+            double Cost = 0;
+            double OperationValue = 0;
+            double Tax = 0;
+            double TaxOffset = 0;
+            double AveragePrice = 0;
+            double Profit = 0;
             foreach (var operation in operations)
             {
-                if (QuantidadeDeAcoes == 0)
+                if (StocksBalance == 0)
                 {
-                    PrecoMedio = 0;
-                    Custo = 0;
+                    AveragePrice = 0;
+                    Cost = 0;
                 }
-                ValorOperacao = operation.UnitCost * operation.Quantity;
+                OperationValue = operation.UnitCost * operation.Quantity;
                 if (operation.Type == OperationType.Buy)
                 {
-                    QuantidadeDeAcoes += operation.Quantity;
-                    Custo -= ValorOperacao;
-                    PrecoMedio = -1*Custo/ QuantidadeDeAcoes;
+                    StocksBalance += operation.Quantity;
+                    Cost -= OperationValue;
+                    AveragePrice = -1* Cost / StocksBalance;
                     taxes.Add(new Tax() { tax = 0 });
                     continue;
                 }
-                if(ValorOperacao < 20000)
+                if(OperationValue < 20000)
                 {
-                    if(operation.UnitCost < PrecoMedio)
+                    if(operation.UnitCost < AveragePrice)
                     {
-                        ImpostoAbater -= (PrecoMedio-operation.UnitCost)*operation.Quantity;
+                        TaxOffset -= (AveragePrice - operation.UnitCost)*operation.Quantity;
                     }
-                    QuantidadeDeAcoes -= operation.Quantity;
-                    Custo += ValorOperacao;
+                    StocksBalance -= operation.Quantity;
+                    Cost += OperationValue;
                     taxes.Add(new Tax() { tax = 0 });
                     continue;
                 }
-                else if (operation.UnitCost > PrecoMedio)
+                else if (operation.UnitCost > AveragePrice)
                 {
-                    //Custo += ValorOperacao;
-                    Lucro = ValorOperacao-operation.Quantity*PrecoMedio;
-                    if(ImpostoAbater < 0 && Lucro > 0)
+                    Profit = OperationValue - operation.Quantity* AveragePrice;
+                    if(TaxOffset < 0 && Profit > 0)
                     {
-                        if (Lucro > ImpostoAbater*-1) Lucro += ImpostoAbater;
+                        if (Profit > TaxOffset * -1) Profit += TaxOffset;
                         else 
                         {
-                            ImpostoAbater += Lucro;
-                            Lucro = 0;
+                            TaxOffset += Profit;
+                            Profit = 0;
                         };
                     }
-                    QuantidadeDeAcoes -= operation.Quantity;
-                    if(Lucro > 0)
+                    StocksBalance -= operation.Quantity;
+                    if(Profit > 0)
                     {
-                        Imposto = Lucro*20/100;
+                        Tax = Profit * 20/100;
                     }
-                    taxes.Add(new Tax() { tax = Imposto });
+                    taxes.Add(new Tax() { tax = Tax });
                     continue;
                 }
-                else if (operation.UnitCost < PrecoMedio)
+                else if (operation.UnitCost < AveragePrice)
                 {
-                    Lucro = ValorOperacao - operation.Quantity * PrecoMedio;
-                    if (ImpostoAbater < 0 && Lucro > 0)
+                    Profit = OperationValue - operation.Quantity * AveragePrice;
+                    if (TaxOffset < 0 && Profit > 0)
                     {
-                        if (Lucro > ImpostoAbater*-1) Lucro += ImpostoAbater;
-                        else ImpostoAbater -= Lucro;
+                        if (Profit > TaxOffset * -1) Profit += TaxOffset;
+                        else TaxOffset -= Profit;
                     }
-                    if (operation.UnitCost < PrecoMedio)
+                    if (operation.UnitCost < AveragePrice)
                     {
-                        ImpostoAbater += Lucro;
+                        TaxOffset += Profit;
                     }
-                    QuantidadeDeAcoes -= operation.Quantity;
+                    StocksBalance -= operation.Quantity;
                     taxes.Add(new Tax() { tax = 0 });
                     continue;
-                }else if (operation.UnitCost == PrecoMedio)
+                }else if (operation.UnitCost == AveragePrice)
                 {
-                    QuantidadeDeAcoes -= operation.Quantity;
+                    StocksBalance -= operation.Quantity;
                     taxes.Add(new Tax() { tax = 0 });
                 }
             }
             return taxes;
         }
-    }
-
-    class Operation
-    {
-        [JsonPropertyName("operation")]
-        public OperationType Type { get; set; }
-
-        [JsonPropertyName("unit-cost")]
-        public double UnitCost { get; set; }
-
-        [JsonPropertyName("quantity")]
-        public int Quantity { get; set; }
-    }
-
-    enum OperationType
-    {
-        Buy,
-        Sell
-    }
-
-    class Tax
-    {
-        public double tax { get; set; }
     }
 }
