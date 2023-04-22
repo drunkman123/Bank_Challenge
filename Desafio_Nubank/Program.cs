@@ -44,13 +44,13 @@ namespace GanhoCapital
         {
 
             var taxes = new List<Tax>();
-            double StocksBalance = 0;
-            double Cost = 0;
-            double OperationValue = 0;
-            double Tax = 0;
-            double TaxOffset = 0;
-            double AveragePrice = 0;
-            double Profit = 0;
+            int StocksBalance = 0;
+            decimal Cost = 0;
+            decimal OperationValue = 0.00m;
+            decimal Tax = 0.00m;
+            decimal TaxOffset = 0.00m;
+            decimal AveragePrice = 0.00m;
+            decimal Profit = 0.00m;
             foreach (var operation in operations)
             {
                 if (StocksBalance == 0)
@@ -75,7 +75,7 @@ namespace GanhoCapital
                     }
                     StocksBalance -= operation.Quantity;
                     Cost += OperationValue;
-                    taxes.Add(new Tax() { tax = 0 });
+                    taxes.Add(new Tax() { tax = 0.00m });
                     continue;
                 }
                 else if (operation.UnitCost > AveragePrice)
@@ -111,12 +111,12 @@ namespace GanhoCapital
                         TaxOffset += Profit;
                     }
                     StocksBalance -= operation.Quantity;
-                    taxes.Add(new Tax() { tax = 0 });
+                    taxes.Add(new Tax() { tax = 0.00m });
                     continue;
                 }else if (operation.UnitCost == AveragePrice)
                 {
                     StocksBalance -= operation.Quantity;
-                    taxes.Add(new Tax() { tax = 0 });
+                    taxes.Add(new Tax() { tax = 0.00m });
                 }
             }
             return taxes;
