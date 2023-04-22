@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Http.Headers;
+﻿using Desafio_Nubank;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -30,7 +27,7 @@ namespace GanhoCapital
                 foreach (var operation in operationList)
                 {
                     //Tax calculation for each single operation
-                    var taxes = CalculateTaxes(operation);
+                    var taxes = OperationsCalcs.CalculateTaxes(operation);
 
                     Console.WriteLine(JsonSerializer.Serialize(taxes));
                 }
@@ -38,88 +35,6 @@ namespace GanhoCapital
             }
 
             Console.ReadLine(); // aguarda a entrada do usuário para encerrar o console
-        }
-
-        static List<Tax> CalculateTaxes(IEnumerable<Operation> operations)
-        {
-
-            var taxes = new List<Tax>();
-            int StocksBalance = 0;
-            decimal Cost = 0;
-            decimal OperationValue = 0.00m;
-            decimal Tax = 0.00m;
-            decimal TaxOffset = 0.00m;
-            decimal AveragePrice = 0.00m;
-            decimal Profit = 0.00m;
-            foreach (var operation in operations)
-            {
-                if (StocksBalance == 0)
-                {
-                    AveragePrice = 0;
-                    Cost = 0;
-                }
-                OperationValue = operation.UnitCost * operation.Quantity;
-                if (operation.Type == OperationType.Buy)
-                {
-                    StocksBalance += operation.Quantity;
-                    Cost -= OperationValue;
-                    AveragePrice = -1* Cost / StocksBalance;
-                    taxes.Add(new Tax() { tax = 0 });
-                    continue;
-                }
-                if(OperationValue < 20000)
-                {
-                    if(operation.UnitCost < AveragePrice)
-                    {
-                        TaxOffset -= (AveragePrice - operation.UnitCost)*operation.Quantity;
-                    }
-                    StocksBalance -= operation.Quantity;
-                    Cost += OperationValue;
-                    taxes.Add(new Tax() { tax = 0.00m });
-                    continue;
-                }
-                else if (operation.UnitCost > AveragePrice)
-                {
-                    Profit = OperationValue - operation.Quantity* AveragePrice;
-                    if(TaxOffset < 0 && Profit > 0)
-                    {
-                        if (Profit > TaxOffset * -1) Profit += TaxOffset;
-                        else 
-                        {
-                            TaxOffset += Profit;
-                            Profit = 0;
-                        };
-                    }
-                    StocksBalance -= operation.Quantity;
-                    if(Profit > 0)
-                    {
-                        Tax = Profit * 20/100;
-                    }
-                    taxes.Add(new Tax() { tax = Tax });
-                    continue;
-                }
-                else if (operation.UnitCost < AveragePrice)
-                {
-                    Profit = OperationValue - operation.Quantity * AveragePrice;
-                    if (TaxOffset < 0 && Profit > 0)
-                    {
-                        if (Profit > TaxOffset * -1) Profit += TaxOffset;
-                        else TaxOffset -= Profit;
-                    }
-                    if (operation.UnitCost < AveragePrice)
-                    {
-                        TaxOffset += Profit;
-                    }
-                    StocksBalance -= operation.Quantity;
-                    taxes.Add(new Tax() { tax = 0.00m });
-                    continue;
-                }else if (operation.UnitCost == AveragePrice)
-                {
-                    StocksBalance -= operation.Quantity;
-                    taxes.Add(new Tax() { tax = 0.00m });
-                }
-            }
-            return taxes;
         }
     }
 }

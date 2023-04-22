@@ -1,4 +1,4 @@
-﻿class Tax
+﻿public class Tax
 {
     public decimal tax { get; set; }
 }

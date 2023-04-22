@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-class Operation
+public class Operation
 {
     [JsonPropertyName("operation")]
     public OperationType Type { get; set; }

@@ -1,4 +1,4 @@
-﻿enum OperationType
+﻿public enum OperationType
 {
     Buy,
     Sell
