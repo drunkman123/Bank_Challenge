@@ -10,4 +10,10 @@ public class Operation
 
     [JsonPropertyName("quantity")]
     public int Quantity { get; set; }
+    public Operation(OperationType type, decimal unitCost, int quantity)
+    {
+        Type = type;
+        UnitCost = unitCost;
+        Quantity = quantity;
+    }
 }
