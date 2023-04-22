@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Desafio_Nubank": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
